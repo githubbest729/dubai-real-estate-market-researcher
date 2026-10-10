@@ -1,0 +1,18 @@
+# GitHub Pages cannot run the proxy, so AI calls will not work there. Manual trigger only.
+name: Deploy static preview to GitHub Pages
+on: { workflow_dispatch: {} }
+permissions: { contents: read, pages: write, id-token: write }
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: { name: github-pages }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir _site
+          cp index.html offline.html 404.html privacy.html terms.html styles.css app.js sw.js service-worker.js sw-register.js manifest.json manifest.webmanifest browserconfig.xml robots.txt sitemap.xml humans.txt favicon* apple-touch-icon.png mstile-150x150.png og-image.png twitter-card.png screenshot-*.png splash-screen.png _site/
+          cp -r js icons _site/ && rm _site/js/package.json
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: _site }
+      - uses: actions/deploy-pages@v4

@@ -1,0 +1,20 @@
+# secrets and local config
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets.*
+.vercel/
+.netlify/
+# user data exports and captured traffic (can contain PII or the webhook URL)
+my-data.json
+audit-log.*
+*.har
+*.log
+# tooling
+node_modules/
+dist/
+_site/
+.DS_Store

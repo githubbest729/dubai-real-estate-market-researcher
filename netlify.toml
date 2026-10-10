@@ -1,0 +1,12 @@
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+
+# Same-origin route to the guarded function. The webhook URL is an environment variable, not stored here.
+[[redirects]]
+  from = "/api/gumloop"
+  to = "/.netlify/functions/gumloop"
+  status = 200
+  force = true
