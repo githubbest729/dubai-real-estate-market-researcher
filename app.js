@@ -1,7 +1,7 @@
 import {$,$$,esc,lite,toast} from './js/ui.js';
 import {sanitize,redact,secureGet,secureSet,wipeAll,cryptoOk} from './js/security.js';
 import * as audit from './js/audit.js';
-import {SNAP,TIERS,communityData,absentFromTable,dataKey,normalizeArea,matchCommunities,n,pct} from './js/snapshot.js';
+import {SNAP,TIERS,communityData,communityDetail,hasData,absentFromTable,dataKey,normalizeArea,matchCommunities,n,pct} from './js/snapshot.js';
 import {vbars,hbars} from './js/charts.js';
 import {sendQuery} from './js/api.js';
 import {createVoice,voiceSupported} from './js/voice.js';
@@ -19,16 +19,18 @@ const currentArea=()=>{const p=state.prefs.area;if(p==='auto'){const h=Object.en
 
 function applyTheme(){document.documentElement.dataset.theme=state.prefs.theme;$('meta[name=theme-color]').content=state.prefs.theme==='dark'?'#09151D':'#0B1F2A'}
 
-const facts=(el,rows)=>{$(el).innerHTML=rows.map(([k,v,s])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}${s?`<small>${esc(s)}</small>`:''}</dd></div>`).join('')};
+const factsHtml=rows=>rows.map(([k,v,s])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}${s?`<small>${esc(s)}</small>`:''}</dd></div>`).join('');
+const facts=(el,rows)=>{$(el).innerHTML=factsHtml(rows)};
 const B=v=>'AED '+v.toFixed(2)+' billion';
 
 function renderDashboard(){
  const S=SNAP,s=S.sep,area=currentArea(),R=S.rent;
  $('#asof').textContent=`City snapshot, ${S.date} · data to ${S.through}`;
- const c=communityData(area);
- $('#selCard').classList.toggle('is-empty',area!=='all'&&!c);
+ const c=communityData(area),cd=communityDetail(area);
+ $('#selCard').classList.toggle('is-empty',area!=='all'&&!c&&!cd);
+ const detail=cd?`<dl class="facts">${factsHtml([['Sales, trailing 12 months',n(cd.sales12m),pct(cd.sales12mYoY)+' year on year'],['September sales',n(cd.sepSales),'McCone wide basis: '+n(cd.sepSalesMcCone)],['Median sale price','AED '+n(cd.medPrice),pct(cd.medPriceYoY)+' year on year'],['Median price per sq ft','AED '+n(cd.psf),pct(cd.psfYoY)+' year on year'],['Off-plan share',cd.offShare.toFixed(1)+'%',''],['Ejari median annual rent (ready homes)','AED '+n(cd.rent),''],['Indicative gross yield',cd.yield.toFixed(2)+'%','Mathematical indicator: rent ÷ ready sale price. Excludes service charges, vacancy, financing']])}</dl><p class="sub">Source: ${esc(cd.source)}. Figures as at ${esc(cd.asOf)}, supplied by the agent; not part of the 10 October snapshot tables and unverified against a DLD index release. Charts below remain city-wide.</p>`:'';
  $('#selCard').innerHTML=area==='all'?`<h2>City-wide apartments</h2><p><strong>${pct(R.apt)}</strong> registered rent change over 12 months; indicative gross yield <strong>${R.yield}%</strong>.</p>`
-  :c?`<h2>${esc(area)}</h2><p>Median annual rent <strong>AED ${n(c.rent)}</strong>, <strong>${pct(c.chg)}</strong> over 12 months to ${S.through}.</p>`
+  :(c||cd)?`<h2>${esc(area)}</h2>`+(c?`<p>Median annual rent <strong>AED ${n(c.rent)}</strong>, <strong>${pct(c.chg)}</strong> over 12 months to ${S.through}.</p>`:'')+detail
   :`<h2>${esc(area)}</h2><p class="zero">${absentFromTable(area)?'Not in the apartment rent table of this snapshot, so no figure is shown.':'Data not available in the current snapshot ('+S.date+').'}</p><p class="sub">The agent tracks this community. The charts below still show the city-wide snapshot.</p><button type="button" id="askAbout" class="btn ghost">Ask the agent about this community</button>`;
  const ab=$('#askAbout');if(ab)ab.onclick=()=>{$('#q').value=`Rent and sales figures for ${area}`;$('.tabs button[data-tab=ask]').click();$('#q').focus()};
  $('#kpis').innerHTML=[[n(s.count),'September home sales',pct(s.countMoM)+' vs August',s.countMoM],['AED '+s.value.toFixed(2)+'B','September sales value',pct(s.valueMoM)+' vs August',s.valueMoM],['AED '+n(s.psf),'Median price per sq ft',pct(s.psfMoM)+' vs August',s.psfMoM],[pct(R.apt),'Apartment rents, 12 months','Gross yield '+R.yield+'%',0]]
@@ -60,7 +62,7 @@ function renderDashboard(){
 function fillCommunities(sel){sel.replaceChildren();
  const add=(p,v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;p.append(o)};
  add(sel,'all','City-wide (no highlight)');add(sel,'auto','Auto (most asked)');
- for(const t of TIERS){const g=document.createElement('optgroup');g.label=`${t.label} tier`;for(const nm of t.names)add(g,nm,nm+(communityData(nm)?' ✓':''));sel.append(g)}}
+ for(const t of TIERS){const g=document.createElement('optgroup');g.label=`${t.label} tier`;for(const nm of t.names)add(g,nm,nm+(hasData(nm)?' ✓':''));sel.append(g)}}
 
 function renderPrefs(){
  state.prefs.area=normalizeArea(state.prefs.area);
