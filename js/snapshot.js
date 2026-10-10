@@ -228,6 +228,21 @@ export const SNAP = {
       offShare: 81.5,
       rent: 58000,
       yield: 7.34
+    },
+    'Al Furjan': {
+      asOf: '5 November 2026',
+      source: 'Dubai Data / DLD open data through 31 Oct 2026',
+      sales12m: 3200,
+      sales12mYoY: 15.2,
+      sepSales: 280,
+      sepSalesMcCone: 270,
+      medPrice: 1250000,
+      medPriceYoY: 8.4,
+      psf: 1320,
+      psfYoY: 10.1,
+      offShare: 65.0,
+      rent: 75000,
+      yield: 6.00
     }
   },
 
