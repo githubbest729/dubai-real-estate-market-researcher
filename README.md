@@ -1,10 +1,4 @@
-Here is a completely redesigned and visually enhanced `README.md`.
 
-I have incorporated UI icons, performance badges (reflecting your near-perfect Lighthouse scores!), a feature grid, and an updated Mermaid sequence diagram that explains your newly built "Hybrid Live-Data Architecture."
-
----
-
-```markdown
 <div align="center">
 
 # 🏙️ Dubai Market Desk
