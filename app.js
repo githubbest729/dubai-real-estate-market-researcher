@@ -29,8 +29,8 @@ function renderDashboard(){
  $('#selCard').innerHTML=area==='all'?`<h2>City-wide apartments</h2><p><strong>${pct(R.apt)}</strong> registered rent change over 12 months; indicative gross yield <strong>${R.yield}%</strong>.</p>`
   :c?`<h2>${esc(c.name)}</h2><p>Median annual rent <strong>AED ${n(c.rent)}</strong>, <strong>${pct(c.chg)}</strong> over 12 months to ${S.through}.</p>`
   :`<h2>${esc(area)}</h2><p>Not in the apartment rent table of this snapshot, so no figure is shown.</p>`;
- $('#kpis').innerHTML=[[n(s.count),'September home sales',pct(s.countMoM)+' vs August'],['AED '+s.value.toFixed(2)+'B','September sales value',pct(s.valueMoM)+' vs August'],['AED '+n(s.psf),'Median price per sq ft',pct(s.psfMoM)+' vs August'],[pct(R.apt),'Apartment rents, 12 months','Gross yield '+R.yield+'%']]
-  .map(([b,l,sub])=>`<div class="kpi"><b>${esc(b)}</b><span>${esc(l)}</span><span class="kpi-sub">${esc(sub)}</span></div>`).join('');
+ $('#kpis').innerHTML=[[n(s.count),'September home sales',pct(s.countMoM)+' vs August',s.countMoM],['AED '+s.value.toFixed(2)+'B','September sales value',pct(s.valueMoM)+' vs August',s.valueMoM],['AED '+n(s.psf),'Median price per sq ft',pct(s.psfMoM)+' vs August',s.psfMoM],[pct(R.apt),'Apartment rents, 12 months','Gross yield '+R.yield+'%',0]]
+  .map(([b,l,sub,d])=>`<div class="kpi"><span class="kpi-l">${esc(l)}</span><b>${esc(b)}</b><span class="kpi-sub ${d>0?'up':d<0?'down':''}">${esc(sub)}</span></div>`).join('');
  const set=(id,t)=>it=>$(id).textContent=t(it);
  vbars($('#cPsf'),{fmt:v=>n(v),items:[
   {label:'Aug 26\nProjectory',value:s.psfAug,note:'August 2026, Projectory (DLD registrations): AED 1,692 per sq ft.'},
