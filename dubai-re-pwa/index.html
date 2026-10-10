@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dubai Market Desk – Real Estate Research</title>
+<meta name="description" content="AI-assisted Dubai real estate market research with forecasts, compliance indicators and audit trail.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api.gumloop.com; frame-ancestors 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0B1F2A">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:title" content="Dubai Market Desk"><meta property="og:image" content="og-image.png"><meta name="twitter:card" content="summary_large_image">
+<meta name="msapplication-config" content="browserconfig.xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="consent" class="consent" role="dialog" aria-modal="true" aria-labelledby="ct" hidden>
+  <div class="sheet"><h2 id="ct">Your data stays yours</h2>
+  <p>Queries are redacted for personal identifiers before leaving your device, and local history is encrypted. You can export or erase everything at any time (UAE PDPL aligned).</p>
+  <button id="consentOk" class="btn primary">Accept and continue</button></div>
+</div>
+
+<header class="top">
+  <div><h1>Dubai Market Desk</h1><p id="status" class="sub">Ready</p></div>
+  <div class="actions">
+    <span id="net" class="pill ok">Online</span>
+    <button id="btnPdf" class="btn ghost" aria-label="Export report to PDF">PDF</button>
+    <button id="btnShare" class="btn ghost" aria-label="Share report">Share</button>
+  </div>
+</header>
+
+<main id="app">
+  <section id="tab-dash" class="tab active" aria-label="Dashboard">
+    <div class="prefs">
+      <label>Area <select id="prefArea"></select></label>
+      <label>Type <select id="prefType"><option value="all">All</option><option value="apartment">Apartment</option><option value="villa">Villa</option></select></label>
+      <label>Forecast <select id="prefHorizon"><option value="3">3 mo</option><option value="6">6 mo</option><option value="12">12 mo</option></select></label>
+      <label>Theme <select id="prefTheme"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <article class="card"><h2>Price per sq ft (AED) with forecast</h2>
+      <canvas id="trend" height="260" role="img" aria-label="Price trend and forecast chart"></canvas>
+      <p id="trendNote" class="sub"></p></article>
+    <article class="card"><h2>Gross rental yield by area</h2>
+      <canvas id="yield" height="220" role="img" aria-label="Rental yield bar chart"></canvas></article>
+    <p class="sub">Sample market data for demonstration. Ask the AI agent for current figures.</p>
+  </section>
+
+  <section id="tab-ask" class="tab" aria-label="Ask the agent">
+    <article class="card"><h2>Ask the research agent</h2>
+      <div class="agents" id="agentPick"></div>
+      <textarea id="q" rows="4" maxlength="1500" placeholder="e.g. Compare Business Bay and JVC for 2-bed investment yields"></textarea>
+      <div class="row"><button id="mic" class="btn ghost" aria-pressed="false">🎤 Voice</button><span id="redactNote" class="sub"></span><button id="send" class="btn primary">Send query</button></div>
+    </article>
+    <div id="results"></div>
+  </section>
+
+  <section id="tab-collab" class="tab" aria-label="Agent collaboration">
+    <article class="card"><h2>Agent workflow</h2><p class="sub">Selected agents work in sequence; each hands findings to the next.</p>
+      <ol id="pipeline" class="pipeline"></ol></article>
+    <article class="card"><h2>Shared team notes</h2>
+      <textarea id="notes" rows="5" maxlength="2000" placeholder="Notes visible to all agents in this workspace (never include personal data)"></textarea>
+      <button id="saveNotes" class="btn ghost">Save notes</button></article>
+  </section>
+
+  <section id="tab-comp" class="tab" aria-label="Compliance">
+    <article class="card"><h2>UAE data protection status</h2><ul id="checks" class="checks"></ul></article>
+    <article class="card"><h2>Your data controls</h2>
+      <p class="sub">Local data is encrypted with a non-exportable key and auto-deleted after 30 days.</p>
+      <div class="row"><button id="exportData" class="btn ghost">Download my data</button><button id="wipe" class="btn danger">Erase all data</button></div></article>
+  </section>
+
+  <section id="tab-audit" class="tab" aria-label="Audit log">
+    <article class="card"><h2>Audit log</h2><p id="chainState" class="sub"></p>
+      <div class="row"><button id="auditJson" class="btn ghost">Export JSON</button><button id="auditCsv" class="btn ghost">Export CSV</button></div>
+      <ul id="audit" class="audit"></ul></article>
+  </section>
+</main>
+
+<nav class="tabs" aria-label="Main">
+  <button data-tab="dash" class="on">Dashboard</button><button data-tab="ask">Ask</button><button data-tab="collab">Agents</button><button data-tab="comp">Compliance</button><button data-tab="audit">Audit</button>
+</nav>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="sw-register.js"></script>
+<script type="module" src="app.js"></script>
+<noscript>This app requires JavaScript.</noscript>
+</body>
+</html>
