@@ -173,3 +173,9 @@ canvas{display:block;width:100%;height:auto;touch-action:pan-y;cursor:pointer}
 .tip-hit.lv-18{--lv:18}
 .tip-hit.lv-19{--lv:19}
 .tip-hit.lv-20{--lv:20}
+
+/* community zero-state */
+#selCard.is-empty{border-style:dashed;background:var(--card2)}
+.zero{color:var(--mute);font-weight:650}
+#selCard .btn{margin-top:var(--s2)}
+optgroup{font-weight:700}
