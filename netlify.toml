@@ -1,2 +1,9 @@
 [build]
   publish = "."
+
+# Same-origin proxy to the Gumloop webhook (avoids browser CORS blocks)
+[[redirects]]
+  from = "/api/gumloop"
+  to = "https://api.gumloop.com/trigger_incoming_webhook/DUDswynapjkVUwbVHzY8BR/wXH7zl-JYywwBTkx68pS8S9Qj8r7CtpUywpuRuBh4uU"
+  status = 200
+  force = true

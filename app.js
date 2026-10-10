@@ -7,8 +7,10 @@ import {sendQuery} from './js/api.js';
 import {createVoice,voiceSupported} from './js/voice.js';
 import {exportPdf,shareReport,download} from './js/export.js';
 
-// Gumloop AI agent webhook – user inputs are transmitted here (after PII redaction).
+// Gumloop AI agent webhook. Browsers block direct calls (CORS), so the app posts to a same-origin proxy path
+// that the host forwards to this URL (see vercel.json, netlify.toml, dev-server.js). User input is redacted first.
 const WEBHOOK_URL='https://api.gumloop.com/trigger_incoming_webhook/DUDswynapjkVUwbVHzY8BR/wXH7zl-JYywwBTkx68pS8S9Qj8r7CtpUywpuRuBh4uU';
+const PROXY_PATH='/api/gumloop';
 
 const AGENTS=[{id:'market',name:'Market Analyst',task:'Analyse prices, supply and trends'},{id:'compliance',name:'Compliance Reviewer',task:'Check RERA/DLD and data-protection considerations'},{id:'invest',name:'Investment Advisor',task:'Assess yield, risk and entry timing'}];
 const state={prefs:{area:'all',rent:'chg',theme:'auto',agents:['market'],hits:{}},history:[],notes:'',consent:false,lastReport:''};
@@ -30,7 +32,7 @@ function renderDashboard(){
   :c?`<h2>${esc(c.name)}</h2><p>Median annual rent <strong>AED ${n(c.rent)}</strong>, <strong>${pct(c.chg)}</strong> over 12 months to ${S.through}.</p>`
   :`<h2>${esc(area)}</h2><p>Not in the apartment rent table of this snapshot, so no figure is shown.</p>`;
  $('#kpis').innerHTML=[[n(s.count),'September home sales',pct(s.countMoM)+' vs August'],['AED '+s.value.toFixed(2)+'B','September sales value',pct(s.valueMoM)+' vs August'],['AED '+n(s.psf),'Median price per sq ft',pct(s.psfMoM)+' vs August'],[pct(R.apt),'Apartment rents, 12 months','Gross yield '+R.yield+'%']]
-  .map(([b,l,sub])=>`<div class="kpi"><b>${esc(b)}</b><span>${esc(l)}</span><span style="display:block">${esc(sub)}</span></div>`).join('');
+  .map(([b,l,sub])=>`<div class="kpi"><b>${esc(b)}</b><span>${esc(l)}</span><span class="kpi-sub">${esc(sub)}</span></div>`).join('');
  const set=(id,t)=>it=>$(id).textContent=t(it);
  vbars($('#cPsf'),{fmt:v=>n(v),items:[
   {label:'Aug 26\nProjectory',value:s.psfAug,note:'August 2026, Projectory (DLD registrations): AED 1,692 per sq ft.'},
@@ -93,7 +95,7 @@ async function run({text,message,names,logExtra}){
  const st={};state.prefs.agents.forEach(id=>st[id]='running');renderPipeline(st);
  try{
   await audit.log(message?'snapshot_requested':'query_sent',{agents:state.prefs.agents,...logExtra,destination:'api.gumloop.com'});
-  const res=await sendQuery(WEBHOOK_URL,{message:message||text,query:text,agents:names,workflow:'sequential',context:{community:currentArea(),snapshotDate:'2026-10-10',dataThrough:'2026-09-30'},notes:redact(state.notes).text,session,sentAt:new Date().toISOString(),source:'dubai-market-desk-pwa'});
+  const res=await sendQuery(PROXY_PATH,{message:message||text,query:text,agents:names,workflow:'sequential',context:{community:currentArea(),snapshotDate:'2026-10-10',dataThrough:'2026-09-30'},notes:redact(state.notes).text,session,sentAt:new Date().toISOString(),source:'dubai-market-desk-pwa'});
   state.history.unshift({ts:Date.now(),agents:message?'City snapshot request':names.join(' → '),text:res.text});state.history=state.history.slice(0,20);
   state.prefs.agents.forEach(id=>st[id]='done');renderPipeline(st);await secureSet('history',state.history);await savePrefs();
   await audit.log(res.opaque?'query_delivered_opaque':'response_received',{});toast(res.opaque?'Query delivered':'Response received');
