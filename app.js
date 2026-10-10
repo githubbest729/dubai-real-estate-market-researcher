@@ -1,5 +1,5 @@
 import {$,$$,esc,lite,toast} from './js/ui.js';
-import {sanitize,redact,secureGet,secureSet,wipeAll,cryptoOk} from './js/security.js';
+import {sanitize,redact,secureGet,secureSet,wipeAll,cryptoOk,idle,warmKey} from './js/security.js';
 import * as audit from './js/audit.js';
 import {SNAP,TIERS,communityData,communityDetail,hasData,absentFromTable,dataKey,normalizeArea,matchCommunities,n,pct} from './js/snapshot.js';
 import {vbars,hbars} from './js/charts.js';
@@ -149,12 +149,25 @@ function setupActions(){
  addEventListener('resize',()=>['#cPsf','#cCount','#cValue','#cRent','#cBeds'].forEach(i=>$(i)._redraw?.()));
  matchMedia('(prefers-color-scheme:dark)').onchange=()=>renderDashboard()}
 
-async function init(){
+function syncPrefs(){state.prefs.area=normalizeArea(state.prefs.area);
+ [['#prefArea','area'],['#prefRent','rent'],['#prefTheme','theme']].forEach(([id,k])=>{$(id).value=state.prefs[k]})}
+
+// Stored data is read after first paint. The page renders instantly from defaults (space is already reserved in CSS),
+// then re-renders only if saved preferences differ.
+async function hydrate(){
+ warmKey();
  await audit.loadAudit();
- state.prefs={...state.prefs,...await secureGet('prefs',{})};
- state.history=(await secureGet('history',[])).filter(h=>Date.now()-h.ts<30*864e5);
- state.notes=await secureGet('notes','');$('#notes').value=state.notes;
- state.consent=!!await secureGet('consent');$('#consent').hidden=state.consent;
- applyTheme();renderPrefs();renderAgents();setupNav();setupVoice();setupActions();renderResults();renderDashboard();
- await audit.log('session_start',{});await renderCompliance();await renderAudit();if(state.consent&&!tourDone())setTimeout(launchTour,700)}
+ const [prefs,history,notes,consent]=await Promise.all([secureGet('prefs',{}),secureGet('history',[]),secureGet('notes',''),secureGet('consent')]);
+ state.prefs={...state.prefs,...prefs};
+ state.history=history.filter(h=>Date.now()-h.ts<30*864e5);
+ state.notes=notes;$('#notes').value=notes;
+ state.consent=!!consent;$('#consent').hidden=state.consent;
+ syncPrefs();applyTheme();renderAgents();renderResults();renderDashboard();
+ audit.log('session_start',{});
+ await idle(async()=>{await renderCompliance();await renderAudit()});
+ if(state.consent&&!tourDone())setTimeout(launchTour,700)}
+
+function init(){
+ renderPrefs();renderAgents();setupNav();setupVoice();setupActions();renderResults();renderDashboard();
+ hydrate().catch(e=>console.warn('hydrate failed',e))}
 init();

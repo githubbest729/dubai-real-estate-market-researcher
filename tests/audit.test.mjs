@@ -1,0 +1,14 @@
+import assert from 'node:assert';
+import {log,verify,entries,loadAudit} from '../js/audit.js';
+import {sha256,idle,yieldToMain} from '../js/security.js';
+assert.equal(await sha256('abc'),'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+await loadAudit();
+for(let i=0;i<45;i++)await log('evt',{i});
+assert.equal(entries().length,45);
+assert.equal(await verify(),true);
+const p1=verify(),p2=verify();assert.equal(p1,p2,'verify should share one in-flight/cached result');
+entries()[10].detail={i:999};
+assert.equal(await verify(),true,'cached result is reused');
+assert.equal(await verify(true),false,'forced re-verify detects tampering');
+let ran=false;await idle(()=>{ran=true});assert.ok(ran);await yieldToMain();
+console.log('audit test passed');

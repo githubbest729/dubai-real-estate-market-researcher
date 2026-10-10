@@ -38,9 +38,9 @@ function overlay(c,{items,fmt,kind,cols,lv,enter,leave,click}){
   grid.append(b)});
  wrap.append(grid)}
 
-export function vbars(c,{items,fmt,h=230,onPick}){
+export function vbars(c,{items,fmt,h:h0=230,onPick}){
  let sel=-1,hov=-1;const P={l:44,r:10,t:30,b:48},vals=items.map(i=>i.value),T=nice(0,Math.max(...vals)*1.06);
- const draw=()=>{const {g,w}=setup(c,h),bw=(w-P.l-P.r)/items.length,base=h-P.b,Y=v=>base-(base-P.t)*(v-T.lo)/(T.hi-T.lo),act=hov>=0?hov:sel;
+ const draw=()=>{const h=c.clientHeight||h0,{g,w}=setup(c,h),bw=(w-P.l-P.r)/items.length,base=h-P.b,Y=v=>base-(base-P.t)*(v-T.lo)/(T.hi-T.lo),act=hov>=0?hov:sel;
   g.textBaseline='middle';
   T.ticks.forEach((t,k)=>{const y=Math.round(Y(t))+.5;
    if(k<T.ticks.length-1)line(g,P.l,Math.round(Y(t+T.step/2))+.5,w-P.r,Math.round(Y(t+T.step/2))+.5,true);
@@ -56,8 +56,8 @@ export function vbars(c,{items,fmt,h=230,onPick}){
  c._redraw=draw;draw()}
 
 export function hbars(c,{items,fmt,onPick}){
- let sel=-1,hov=-1;const rh=34,top=6,ax=26,h=items.length*rh+top+ax,vals=items.map(i=>i.value);
- const draw=()=>{const {g,w}=setup(c,h),x0=132,x1=w-58,T=nice(Math.min(0,...vals),Math.max(0,...vals),Math.max(2,Math.floor((x1-x0)/56))),
+ let sel=-1,hov=-1;const top=6,ax=26,vals=items.map(i=>i.value),H=()=>c.clientHeight||items.length*34+top+ax,RH=()=>(H()-top-ax)/items.length;
+ const draw=()=>{const h=H(),rh=RH(),{g,w}=setup(c,h),x0=132,x1=w-58,T=nice(Math.min(0,...vals),Math.max(0,...vals),Math.max(2,Math.floor((x1-x0)/56))),
   X=a=>x0+(a-T.lo)/(T.hi-T.lo)*(x1-x0),z=X(0),yb=top+items.length*rh,act=hov>=0?hov:sel;
   T.ticks.forEach((t,k)=>{const x=Math.round(X(t))+.5;
    if(k<T.ticks.length-1){const m=Math.round(X(t+T.step/2))+.5;line(g,m,top,m,yb,true)}

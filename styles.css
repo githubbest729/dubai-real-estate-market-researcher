@@ -72,7 +72,7 @@ textarea{resize:vertical;line-height:1.5}
 .kpi-sub.up{color:var(--ok)}.kpi-sub.down{color:var(--bad)}
 
 /* charts */
-canvas{display:block;width:100%;height:auto;touch-action:pan-y;cursor:pointer}
+canvas{display:block;width:100%;touch-action:pan-y;cursor:pointer}
 .card .sub{min-height:2.6em}
 
 /* data lists */
@@ -129,7 +129,7 @@ canvas{display:block;width:100%;height:auto;touch-action:pan-y;cursor:pointer}
 .chart{position:relative}
 .tip-grid{position:absolute;display:grid;margin:0;padding:0;--pb:48px;--pt:30px}
 .tip-grid.v{top:0;bottom:0;left:44px;right:10px}
-.tip-grid.h{top:6px;left:0;right:0;grid-auto-rows:34px}
+.tip-grid.h{top:6px;bottom:26px;left:0;right:0;grid-auto-rows:1fr}
 .tip-grid.cols-1{grid-template-columns:minmax(0,1fr)}
 .tip-grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .tip-grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -224,3 +224,20 @@ body.tour-on{overflow:hidden}
 @media(prefers-reduced-motion:reduce){.tour-backdrop,.tour-card,.tour-highlight-active,.tour-arrow{animation:none!important}}
 @media print{.tour-backdrop,.tour-card{display:none!important}}
 .tour-back,.tour-next{min-width:88px}
+
+/* ---- Layout-shift prevention: reserve space before JavaScript fills content ---- */
+html{scrollbar-gutter:stable}
+/* chart heights live in CSS (js/charts.js reads clientHeight), so the canvas is the same size before and after drawing */
+.ch-200{height:200px}.ch-210{height:210px}.ch-230{height:230px}.ch-304{height:304px}
+#asof{display:block;min-height:1.4em}
+#selCard{min-height:132px}
+.kpis:empty{min-height:216px}
+#fSep:empty{min-height:480px}
+#fPix:empty,#fQ3:empty{min-height:340px}
+#fRent:empty{min-height:260px}
+#fDld:empty{min-height:320px}
+/* skeleton shimmer while a placeholder is still empty */
+#selCard:empty,.kpis:empty,.facts:empty{border-radius:var(--r);background:linear-gradient(100deg,var(--card2) 30%,var(--line) 50%,var(--card2) 70%) 0 0/200% 100%;animation:skeleton 1.3s linear infinite}
+@keyframes skeleton{to{background-position:-200% 0}}
+@media(min-width:720px){#selCard{min-height:108px}.kpis:empty{min-height:106px}}
+@media(prefers-reduced-motion:reduce){#selCard:empty,.kpis:empty,.facts:empty{animation:none}}
