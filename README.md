@@ -4,6 +4,8 @@
 # 🏙️ Dubai Market Desk
 *An AI-Powered Progressive Web App for Dubai Real Estate Intelligence*
 
+Dubai Market Desk is like having a super-smart, private real estate advisor in your pocket
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![PWA Ready](https://img.shields.io/badge/PWA-Ready-success?style=flat-square&logo=pwa)](#)
 [![Data Status](https://img.shields.io/badge/Data_Snapshot-Oct_2026-orange?style=flat-square&logo=database)](#)
