@@ -39,7 +39,9 @@ function overlay(c,{items,fmt,kind,cols,lv,enter,leave,click}){
  wrap.append(grid)}
 
 export function vbars(c,{items,fmt,h:h0=230,onPick}){
- let sel=-1,hov=-1;const P={l:44,r:10,t:30,b:48},vals=items.map(i=>i.value),T=nice(0,Math.max(...vals)*1.06);
+ let sel=-1,hov=-1,vals,T;const P={l:44,r:10,t:30,b:48};
+ const calc=()=>{vals=items.map(i=>i.value);T=nice(0,Math.max(...vals)*1.06)};
+ const build=()=>overlay(c,{items,fmt,kind:'v',cols:items.length,lv:it=>Math.max(0,Math.min(20,Math.round(20*(it.value-T.lo)/(T.hi-T.lo)))),enter:i=>{hov=i;draw()},leave:()=>{hov=-1;draw()},click:i=>{sel=i;draw();onPick?.(items[i])}});
  const draw=()=>{const h=c.clientHeight||h0,{g,w}=setup(c,h),bw=(w-P.l-P.r)/items.length,base=h-P.b,Y=v=>base-(base-P.t)*(v-T.lo)/(T.hi-T.lo),act=hov>=0?hov:sel;
   g.textBaseline='middle';
   T.ticks.forEach((t,k)=>{const y=Math.round(Y(t))+.5;
@@ -51,14 +53,15 @@ export function vbars(c,{items,fmt,h:h0=230,onPick}){
    g.fillStyle=grad(g,0,base-bh,0,base,hl?'--bar-hl-a':'--bar-a',hl?'--bar-hl-b':'--bar-b');bar(g,x,base-bh,wd,bh,[6,6,0,0]);
    g.textAlign='center';g.fillStyle=cs('--ink');g.font=font(700,12.5);g.fillText(fmt(it.value),x+wd/2,base-bh-7);
    g.fillStyle=cs('--mute');g.font=font(500,11);it.label.split('\n').forEach((s,k)=>g.fillText(s,x+wd/2,base+17+k*13))})};
- overlay(c,{items,fmt,kind:'v',cols:items.length,lv:it=>Math.max(0,Math.min(20,Math.round(20*(it.value-T.lo)/(T.hi-T.lo)))),
-  enter:i=>{hov=i;draw()},leave:()=>{hov=-1;draw()},click:i=>{sel=i;draw();onPick?.(items[i])}});
- c._redraw=draw;draw()}
+ calc();build();c._redraw=draw;draw();
+ return {update(newItems){items=newItems;sel=-1;hov=-1;calc();build();draw()}}
+}
 
 export function hbars(c,{items,fmt,onPick}){
- let sel=-1,hov=-1;const top=6,ax=26,vals=items.map(i=>i.value),H=()=>c.clientHeight||items.length*34+top+ax,RH=()=>(H()-top-ax)/items.length;
- const draw=()=>{const h=H(),rh=RH(),{g,w}=setup(c,h),x0=132,x1=w-58,T=nice(Math.min(0,...vals),Math.max(0,...vals),Math.max(2,Math.floor((x1-x0)/56))),
-  X=a=>x0+(a-T.lo)/(T.hi-T.lo)*(x1-x0),z=X(0),yb=top+items.length*rh,act=hov>=0?hov:sel;
+ let sel=-1,hov=-1;const top=6,ax=26;
+ const build=()=>overlay(c,{items,fmt,kind:'h',cols:1,enter:i=>{hov=i;draw()},leave:()=>{hov=-1;draw()},click:i=>{sel=i;draw();onPick?.(items[i])}});
+ const draw=()=>{const vals=items.map(i=>i.value),h=c.clientHeight||items.length*34+top+ax,rh=(h-top-ax)/items.length,{g,w}=setup(c,h),x0=132,x1=w-58,
+  T=nice(Math.min(0,...vals),Math.max(0,...vals),Math.max(2,Math.floor((x1-x0)/56))),X=a=>x0+(a-T.lo)/(T.hi-T.lo)*(x1-x0),z=X(0),yb=top+items.length*rh,act=hov>=0?hov:sel;
   T.ticks.forEach((t,k)=>{const x=Math.round(X(t))+.5;
    if(k<T.ticks.length-1){const m=Math.round(X(t+T.step/2))+.5;line(g,m,top,m,yb,true)}
    line(g,x,top,x,yb,false);
@@ -71,5 +74,6 @@ export function hbars(c,{items,fmt,onPick}){
    g.fillStyle=grad(g,xa,0,xa+bw,0,hl?'--bar-hl-a':neg?'--neg-a':'--bar-a',hl?'--bar-hl-b':neg?'--neg-b':'--bar-b');
    bar(g,xa,y-9,bw,18,neg?[5,0,0,5]:[0,5,5,0]);
    g.font=font(700,11.5);g.fillStyle=cs('--ink');g.textAlign=neg?'right':'left';g.fillText(fmt(a),neg?xa-5:xa+bw+5,y)})};
- overlay(c,{items,fmt,kind:'h',cols:1,enter:i=>{hov=i;draw()},leave:()=>{hov=-1;draw()},click:i=>{sel=i;draw();onPick?.(items[i])}});
- c._redraw=draw;draw()}
+ build();c._redraw=draw;draw();
+ return {update(newItems){items=newItems;sel=-1;hov=-1;build();draw()}}
+}

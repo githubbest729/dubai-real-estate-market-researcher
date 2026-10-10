@@ -24,7 +24,10 @@ export const SNAP={
   notInTable:['Palm Jumeirah','Jumeirah Beach Residence','Arabian Ranches']},
  communityDetail:{ // Per-community figures supplied by the Gumloop agent; a different window from the 10 Oct snapshot tables.
   'Downtown Jebel Ali':{asOf:'7 October 2026',source:'Dubai Data / Heart Homes (DLD registrations through 7 Oct 2026)',
-   sales12m:3306,sales12mYoY:278.7,sepSales:498,sepSalesMcCone:464,medPrice:747000,medPriceYoY:-22.3,psf:1660,psfYoY:26.6,offShare:95.0,rent:51000,yield:8.80}},
+   sales12m:3306,sales12mYoY:278.7,sepSales:498,sepSalesMcCone:464,medPrice:747000,medPriceYoY:-22.3,psf:1660,psfYoY:26.6,offShare:95.0,rent:51000,yield:8.80},
+  'Jebel Ali':{asOf:'7 October 2026',source:'Dubai Data / DLD open data through 7 Oct 2026 (Unverified against official index. Ready apartments mapping to Discovery Gardens)',
+   sales12m:172,sales12mYoY:-73.5,sepSales:0,medPrice:575000,medPriceYoY:-9.4,psf:967,psfYoY:15.5,offShare:0.0,rent:52000}
+  },
  dldQ1:{value:252,valueYoY:31,tx:60303,txYoY:6},
  src:{pro:PRO}};
 
