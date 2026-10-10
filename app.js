@@ -1,9 +1,8 @@
 import {$,$$,esc,lite,toast} from './js/ui.js';
 import {sanitize,redact,secureGet,secureSet,wipeAll,cryptoOk} from './js/security.js';
 import * as audit from './js/audit.js';
-import {AREAS,months,series,yieldFor} from './js/data.js';
-import {forecast} from './js/forecast.js';
-import {lineChart,barChart} from './js/charts.js';
+import {SNAP,ALIASES,allCommunities,n,pct} from './js/snapshot.js';
+import {vbars,hbars} from './js/charts.js';
 import {sendQuery} from './js/api.js';
 import {createVoice,voiceSupported} from './js/voice.js';
 import {exportPdf,shareReport,download} from './js/export.js';
@@ -12,31 +11,54 @@ import {exportPdf,shareReport,download} from './js/export.js';
 const WEBHOOK_URL='https://api.gumloop.com/trigger_incoming_webhook/DUDswynapjkVUwbVHzY8BR/wXH7zl-JYywwBTkx68pS8S9Qj8r7CtpUywpuRuBh4uU';
 
 const AGENTS=[{id:'market',name:'Market Analyst',task:'Analyse prices, supply and trends'},{id:'compliance',name:'Compliance Reviewer',task:'Check RERA/DLD and data-protection considerations'},{id:'invest',name:'Investment Advisor',task:'Assess yield, risk and entry timing'}];
-const state={prefs:{area:'auto',type:'all',horizon:'6',theme:'auto',agents:['market'],hits:{}},history:[],notes:'',consent:false,lastReport:''};
+const state={prefs:{area:'all',rent:'chg',theme:'auto',agents:['market'],hits:{}},history:[],notes:'',consent:false,lastReport:''};
 const session=crypto.randomUUID?crypto.randomUUID():String(Date.now());
 
 async function savePrefs(){await secureSet('prefs',state.prefs)}
-const currentArea=()=>{if(state.prefs.area!=='auto')return state.prefs.area;const h=Object.entries(state.prefs.hits).sort((a,b)=>b[1]-a[1])[0];return h?h[0]:'Downtown Dubai'};
+const currentArea=()=>{const p=state.prefs.area;if(p==='auto'){const h=Object.entries(state.prefs.hits).sort((x,y)=>y[1]-x[1])[0];return h?h[0]:'all'}return allCommunities().includes(p)?p:'all'};
 
 function applyTheme(){document.documentElement.dataset.theme=state.prefs.theme;$('meta[name=theme-color]').content=state.prefs.theme==='dark'?'#09151D':'#0B1F2A'}
 
+const facts=(el,rows)=>{$(el).innerHTML=rows.map(([k,v,s])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}${s?`<small>${esc(s)}</small>`:''}</dd></div>`).join('')};
+const B=v=>'AED '+v.toFixed(2)+' billion';
+
 function renderDashboard(){
- const area=currentArea(),a=AREAS[area],h=+state.prefs.horizon,type=state.prefs.type,v=series(area,type),f=forecast(v,h),lab=months(12),
-  fl=[...Array(h)].map((_,i)=>{const d=new Date();d.setMonth(d.getMonth()+i+1);return d.toLocaleString('en',{month:'short',year:'2-digit'})}),
-  cur=v.at(-1),yoy=((cur/v[0]-1)*100),fch=((f.fc.at(-1)/cur-1)*100);
- $('#kpis').innerHTML=[['AED '+cur.toLocaleString()+'/sqft',area],[(yoy>=0?'+':'')+yoy.toFixed(1)+'%','12-month change'],[yieldFor(a,type).toFixed(1)+'%','Gross rental yield'],[(fch>=0?'+':'')+fch.toFixed(1)+'%','Forecast, '+h+' months']]
-  .map(([b,s])=>`<div class="kpi"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join('');
- lineChart($('#trend'),{labels:[...lab,...fl],hist:v,fc:f.fc,lo:f.lo,hi:f.hi});
- $('#trendNote').textContent=`Dashed line: linear-trend forecast with 80% range. Touch the chart to inspect values.`;
- const names=Object.keys(AREAS);barChart($('#yield'),{labels:names,values:names.map(n=>yieldFor(AREAS[n],type)),highlight:area});
- state.lastReport=`Dubai Market Desk report (${new Date().toLocaleDateString()})\nArea: ${area} | Type: ${type}\nPrice: AED ${cur}/sqft | 12m: ${yoy.toFixed(1)}% | Yield: ${yieldFor(a,type).toFixed(1)}%\nForecast (${h}m): AED ${f.fc.at(-1)}/sqft (range ${f.lo.at(-1)}–${f.hi.at(-1)})\n`+state.history.slice(0,1).map(x=>`\nLatest agent insight:\n${x.text}`).join('')+'\n\nSample data is illustrative. Not investment advice.';
+ const S=SNAP,s=S.sep,area=currentArea(),R=S.rent;
+ $('#asof').textContent=`City snapshot, ${S.date} · data to ${S.through}`;
+ const c=R.communities.find(x=>x.name===area);
+ $('#selCard').innerHTML=area==='all'?`<h2>City-wide apartments</h2><p><strong>${pct(R.apt)}</strong> registered rent change over 12 months; indicative gross yield <strong>${R.yield}%</strong>.</p>`
+  :c?`<h2>${esc(c.name)}</h2><p>Median annual rent <strong>AED ${n(c.rent)}</strong>, <strong>${pct(c.chg)}</strong> over 12 months to ${S.through}.</p>`
+  :`<h2>${esc(area)}</h2><p>Not in the apartment rent table of this snapshot, so no figure is shown.</p>`;
+ $('#kpis').innerHTML=[[n(s.count),'September home sales',pct(s.countMoM)+' vs August'],['AED '+s.value.toFixed(2)+'B','September sales value',pct(s.valueMoM)+' vs August'],['AED '+n(s.psf),'Median price per sq ft',pct(s.psfMoM)+' vs August'],[pct(R.apt),'Apartment rents, 12 months','Gross yield '+R.yield+'%']]
+  .map(([b,l,sub])=>`<div class="kpi"><b>${esc(b)}</b><span>${esc(l)}</span><span style="display:block">${esc(sub)}</span></div>`).join('');
+ const set=(id,t)=>it=>$(id).textContent=t(it);
+ vbars($('#cPsf'),{fmt:v=>n(v),items:[
+  {label:'Aug 26\nProjectory',value:s.psfAug,note:'August 2026, Projectory (DLD registrations): AED 1,692 per sq ft.'},
+  {label:'Sep 26\nProjectory',value:s.psf,hl:1,note:'September 2026, Projectory: AED 1,639, −3.1% from August. Mix changed, so price per sq ft and median price moved in opposite directions.'},
+  {label:'Sep 26\nPIX raw',value:S.pix.psf,note:'September 2026, PropertyIndex PIX©: raw median AED 1,652 across 10,011 sales. Differs from Projectory by AED 13.'},
+  {label:'Q3 26\nProp971',value:S.q3.psf,note:'Q3 2026, Prop971: AED 1,685, −2.0% on Q3 2025. Apartments AED 1,693; villas and townhouses AED 1,555.'}],onPick:set('#psfNote',i=>i.note)});
+ vbars($('#cCount'),{fmt:n,items:[
+  {label:'Off-plan',value:s.off.count,note:`Off-plan: ${n(s.off.count)} homes (${s.off.share}% of registrations), ${pct(s.off.countMoM)} vs August.`},
+  {label:'Ready',value:s.ready.count,note:`Ready: ${n(s.ready.count)} homes, ${pct(s.ready.countMoM)} vs August.`}],onPick:set('#countNote',i=>i.note)});
+ vbars($('#cValue'),{fmt:v=>v.toFixed(2),items:[
+  {label:'Off-plan',value:s.off.value,note:`Off-plan value ${B(s.off.value)}, ${pct(s.off.valueMoM)} vs August.`},
+  {label:'Ready',value:s.ready.value,note:`Ready value ${B(s.ready.value)}, ${pct(s.ready.valueMoM)} vs August.`}],onPick:set('#valueNote',i=>i.note)});
+ const med=state.prefs.rent==='median';
+ $('#rentTitle').textContent=med?'Median annual apartment rent by community (AED)':'Apartment rent change by community, 12 months (%)';
+ hbars($('#cRent'),{fmt:med?n:v=>pct(v),items:R.communities.map(x=>({label:x.short,value:med?x.rent:x.chg,hl:x.name===area,note:`${x.name}: median annual rent AED ${n(x.rent)}, ${pct(x.chg)} over 12 months (Prop971, Ejari export of 6 Oct 2026).`})),onPick:set('#rentNote',i=>i.note)});
+ vbars($('#cBeds'),{fmt:n,items:R.beds.map(b=>({label:b.l,value:b.rent,note:`${b.l}: median annual rent AED ${n(b.rent)}, ${pct(b.chg)} over 12 months.`})),onPick:set('#bedNote',i=>i.note)});
+ facts('#fSep',[['Home sales',n(s.count),pct(s.countMoM)+' vs Aug · '+pct(s.countYoY)+' vs Sep 2025'],['Sales value',B(s.value),pct(s.valueMoM)+' vs Aug · '+pct(s.valueYoY)+' vs Sep 2025'],['Median registered price','AED '+s.medPrice.toFixed(2)+' million',pct(s.medPriceMoM)+' vs Aug'],['Median price per sq ft','AED '+n(s.psf),'from AED '+n(s.psfAug)+' in Aug ('+pct(s.psfMoM)+')'],['Off-plan',n(s.off.count)+' homes',`${s.off.share}% of registrations · ${pct(s.off.countMoM)} · value ${B(s.off.value)} (${pct(s.off.valueMoM)})`],['Ready',n(s.ready.count)+' homes',`${pct(s.ready.countMoM)} · value ${B(s.ready.value)} (${pct(s.ready.valueMoM)})`],['Azizi Venice',`${n(s.azizi.aug)} → ${n(s.azizi.sep)}`,'August to September sales'],['Rest of Dubai',`${n(s.rest.aug)} → ${n(s.rest.sep)}`,'August to September sales']]);
+ const p=S.pix;facts('#fPix',[['Mix-adjusted index',String(p.index),pct(p.mom)+' on the month · '+pct(p.yoy)+' year on year'],['Raw median','AED '+n(p.psf)+' per sq ft',n(p.sales)+' sales'],['Ready','AED '+n(p.ready.psf)+' per sq ft',pct(p.ready.yoy)+' year on year'],['Off-plan','AED '+n(p.off.psf)+' per sq ft',pct(p.off.yoy)+' year on year'],['Apartments',pct(p.apt),'year on year'],['Villas',pct(p.villa),'year on year']]);
+ const q=S.q3;facts('#fQ3',[['Residential sales',n(q.sales),pct(q.salesYoY)+' on Q3 2025'],['Sales value','AED '+q.value.toFixed(1)+' billion',pct(q.valueYoY)+' on Q3 2025'],['Median per sq ft','AED '+n(q.psf),pct(q.psfYoY)+' on Q3 2025'],['Apartments / villas & townhouses',`AED ${n(q.apt)} / ${n(q.villa)}`,'per sq ft'],['Median sale price',`AED ${q.medPrice.toFixed(2)} million`,`vs AED ${q.medPricePrev.toFixed(2)} million in Q3 2025`],['Off-plan share of sales',q.offShare+'%','Transaction prices, not asking prices']]);
+ facts('#fRent',[['Apartment rents',pct(R.apt),'registered contracts (Ejari), not asking rents'],['Indicative gross yield',R.yield+'%','Median rent ÷ median ready sale price, apartments. Excludes service charges, vacancy, financing'],['Not in the apartment table',R.notInTable.join(', '),'No figure shown'],['Asking rents','Not included','Bayut and Property Finder pages were blocked or not a current Q3 release']]);
+ const d=S.dldQ1;facts('#fDld',[['Latest DLD release read','Q1 2026','9 April 2026 · all real estate activity, not homes only, not Q3'],['All procedures','AED '+d.value+' billion',pct(d.valueYoY,0)+' year on year'],['Transactions',n(d.tx),pct(d.txYoY,0)+' year on year'],['DLD Residential Sales Price Index','Published through 2022','No current index to confirm the September per-sq-ft move'],['Status','Unverified','September and Q3 figures are third-party counts of DLD and Ejari records']]);
+ state.lastReport=`Dubai city snapshot, ${S.date} (data to ${S.through})\nSeptember 2026: ${n(s.count)} home sales, ${B(s.value)}; ${pct(s.countMoM)} count and ${pct(s.valueMoM)} value vs August.\nOff-plan ${n(s.off.count)} (${s.off.share}%), ready ${n(s.ready.count)}. Median price AED ${s.medPrice} million; median AED ${n(s.psf)}/sq ft (${pct(s.psfMoM)}).\nPIX index ${p.index} (${pct(p.mom)} m/m, ${pct(p.yoy)} y/y).\nQ3 2026: ${n(q.sales)} sales, AED ${q.value}B, median AED ${n(q.psf)}/sq ft.\nRegistered apartment rents ${pct(R.apt)} over 12 months; indicative gross yield ${R.yield}%.\nUnverified against a DLD index release. Not investment advice.`+state.history.slice(0,1).map(x=>`\n\nLatest agent reply:\n${x.text}`).join('');
 }
 
 function renderPrefs(){
- $('#prefArea').innerHTML='<option value="auto">Auto (most asked)</option>'+Object.keys(AREAS).map(n=>`<option>${esc(n)}</option>`).join('');
- for(const k of ['Area','Type','Horizon','Theme']){const el=$('#pref'+k);el.value=state.prefs[k.toLowerCase()];
-  el.onchange=async()=>{state.prefs[k.toLowerCase()]=el.value;await savePrefs();applyTheme();renderDashboard();audit.log('preference_changed',{key:k.toLowerCase()});renderAudit()}}
-}
+ $('#prefArea').innerHTML='<option value="all">City-wide (no highlight)</option><option value="auto">Auto (most asked)</option>'+allCommunities().map(x=>`<option>${esc(x)}</option>`).join('');
+ const bind=(id,key)=>{const el=$(id);el.value=state.prefs[key];el.onchange=async()=>{state.prefs[key]=el.value;await savePrefs();applyTheme();renderDashboard();audit.log('preference_changed',{key});renderAudit()}};
+ bind('#prefArea','area');bind('#prefRent','rent');bind('#prefTheme','theme')}
 
 function renderAgents(){
  $('#agentPick').innerHTML=AGENTS.map(a=>`<label><input type="checkbox" value="${a.id}" ${state.prefs.agents.includes(a.id)?'checked':''}> ${esc(a.name)}</label>`).join('');
@@ -66,24 +88,28 @@ async function renderAudit(){
  $('#chainState').textContent=(await audit.verify()?'Chain verified.':'Chain broken.')+` ${e.length} entries. Query text is never logged.`;
  $('#audit').innerHTML=e.slice(0,100).map(x=>`<li><div><strong>${esc(x.action)}</strong><time>${new Date(x.ts).toLocaleString()}</time><code>${esc(JSON.stringify(x.detail))} · ${x.hash.slice(0,12)}</code></div></li>`).join('')||'<li class="sub">No activity yet.</li>'}
 
-async function submit(){
- const raw=sanitize($('#q').value);if(!raw){toast('Enter a question first');return}
- if(!state.prefs.agents.length){toast('Select at least one agent');return}
- const r=redact(raw);if(r.count)$('#redactNote').textContent=`${r.count} personal item(s) masked before sending.`;else $('#redactNote').textContent='';
- const btn=$('#send');btn.disabled=true;btn.textContent='Sending…';$('#status').textContent='Agents working…';
+async function run({text,message,names,logExtra}){
+ const btn=$('#send');btn.disabled=true;$('#snapBtn').disabled=true;$('#status').textContent='Agents working…';
  const st={};state.prefs.agents.forEach(id=>st[id]='running');renderPipeline(st);
- const names=AGENTS.filter(a=>state.prefs.agents.includes(a.id)).map(a=>a.name);
- for(const n of Object.keys(AREAS))if(raw.toLowerCase().includes(n.toLowerCase()))state.prefs.hits[n]=(state.prefs.hits[n]||0)+1;
  try{
-  await audit.log('query_sent',{agents:state.prefs.agents,chars:raw.length,redactions:r.types,destination:'api.gumloop.com'});
-  const res=await sendQuery(WEBHOOK_URL,{query:r.text,agents:names,workflow:'sequential',context:{area:currentArea(),type:state.prefs.type,horizon:+state.prefs.horizon},notes:redact(state.notes).text,session,sentAt:new Date().toISOString(),source:'dubai-market-desk-pwa'});
-  state.history.unshift({ts:Date.now(),agents:names.join(' → '),text:res.text});state.history=state.history.slice(0,20);
+  await audit.log(message?'snapshot_requested':'query_sent',{agents:state.prefs.agents,...logExtra,destination:'api.gumloop.com'});
+  const res=await sendQuery(WEBHOOK_URL,{message:message||text,query:text,agents:names,workflow:'sequential',context:{community:currentArea(),snapshotDate:'2026-10-10',dataThrough:'2026-09-30'},notes:redact(state.notes).text,session,sentAt:new Date().toISOString(),source:'dubai-market-desk-pwa'});
+  state.history.unshift({ts:Date.now(),agents:message?'City snapshot request':names.join(' → '),text:res.text});state.history=state.history.slice(0,20);
   state.prefs.agents.forEach(id=>st[id]='done');renderPipeline(st);await secureSet('history',state.history);await savePrefs();
   await audit.log(res.opaque?'query_delivered_opaque':'response_received',{});toast(res.opaque?'Query delivered':'Response received');
  }catch(e){state.prefs.agents.forEach(id=>st[id]='error');renderPipeline(st);await audit.log('query_failed',{reason:String(e.message).slice(0,80)});
   state.history.unshift({ts:Date.now(),agents:'Error',text:e.message+' Check your connection and try again.'});toast('Request failed')}
- finally{btn.disabled=false;btn.textContent='Send query';$('#status').textContent='Ready';renderResults();renderDashboard();renderAudit();renderCompliance()}
+ finally{btn.disabled=false;$('#snapBtn').disabled=false;$('#status').textContent='Ready';renderResults();renderDashboard();renderAudit();renderCompliance()}
 }
+async function submit(){
+ const raw=sanitize($('#q').value);if(!raw){toast('Enter a question first');return}
+ if(!state.prefs.agents.length){toast('Select at least one agent');return}
+ const r=redact(raw);$('#redactNote').textContent=r.count?`${r.count} personal item(s) masked before sending.`:'';
+ const low=raw.toLowerCase();
+ for(const nm of allCommunities())if([nm.toLowerCase(),...(ALIASES[nm]||[])].some(k=>low.includes(k)))state.prefs.hits[nm]=(state.prefs.hits[nm]||0)+1;
+ await run({text:r.text,names:AGENTS.filter(a=>state.prefs.agents.includes(a.id)).map(a=>a.name),logExtra:{chars:raw.length,redactions:r.types}})}
+async function requestSnapshot(){if(!state.prefs.agents.length){toast('Select at least one agent');return}
+ await run({text:'City snapshot',message:'City snapshot',names:AGENTS.filter(a=>state.prefs.agents.includes(a.id)).map(a=>a.name),logExtra:{}})}
 
 function setupNav(){
  const go=t=>{$$('.tab').forEach(s=>s.classList.toggle('active',s.id==='tab-'+t));$$('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));scrollTo(0,0);if(t==='dash')renderDashboard()};
@@ -96,7 +122,7 @@ function setupVoice(){
  mic.onclick=()=>{v.toggle();audit.log('voice_toggled',{})}}
 
 function setupActions(){
- $('#send').onclick=submit;
+ $('#send').onclick=submit;$('#snapBtn').onclick=requestSnapshot;
  $('#btnPdf').onclick=()=>{audit.log('export_pdf',{});exportPdf()};
  $('#btnShare').onclick=async()=>{const r=await shareReport('Dubai Market Desk report',state.lastReport);audit.log('share_report',{result:r});toast(r==='copied'?'Report copied':r==='shared'?'Shared':'Share cancelled')};
  $('#saveNotes').onclick=async()=>{state.notes=sanitize($('#notes').value,2000);await secureSet('notes',state.notes);audit.log('notes_saved',{chars:state.notes.length});toast('Notes saved')};
@@ -106,7 +132,7 @@ function setupActions(){
  $('#wipe').onclick=async()=>{if(!confirm('Erase all saved preferences, history, notes and the audit log from this device?'))return;await wipeAll();toast('All local data erased');setTimeout(()=>location.reload(),800)};
  $('#consentOk').onclick=async()=>{state.consent=true;await secureSet('consent',{at:Date.now()});$('#consent').hidden=true;await audit.log('consent_granted',{});renderCompliance();renderAudit()};
  const net=()=>{const o=navigator.onLine;$('#net').textContent=o?'Online':'Offline';$('#net').className='pill '+(o?'ok':'bad')};addEventListener('online',net);addEventListener('offline',net);net();
- addEventListener('resize',()=>{$('#trend')._redraw?.();$('#yield')._redraw?.()});
+ addEventListener('resize',()=>['#cPsf','#cCount','#cValue','#cRent','#cBeds'].forEach(i=>$(i)._redraw?.()));
  matchMedia('(prefers-color-scheme:dark)').onchange=()=>renderDashboard()}
 
 async function init(){

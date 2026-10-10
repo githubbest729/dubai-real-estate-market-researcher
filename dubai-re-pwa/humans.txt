@@ -1,2 +1,0 @@
-/* Developer: Dubai Market Desk team */
-Standards: HTML5, PWA, WebCrypto

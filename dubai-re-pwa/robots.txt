@@ -1,3 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://YOUR-USERNAME.github.io/dubai-market-desk/sitemap.xml
