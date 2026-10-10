@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability within this project, please DO NOT open a public issue. Instead, please send an email to **[INSERT YOUR EMAIL HERE]**. 
+If you discover a security vulnerability within this project, please DO NOT open a public issue. Instead, please send an email to **xtn2k21@gmail.com**. 
 
 All security vulnerabilities will be promptly addressed. We aim to acknowledge receipt of your vulnerability report within 48 hours and will provide regular updates on the resolution process.
 
