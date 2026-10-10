@@ -179,3 +179,48 @@ canvas{display:block;width:100%;height:auto;touch-action:pan-y;cursor:pointer}
 .zero{color:var(--mute);font-weight:650}
 #selCard .btn{margin-top:var(--s2)}
 optgroup{font-weight:700}
+
+/* ---- Guided tour (classes assigned in js/tour.js; no inline styles) ---- */
+#btnGuide{padding:0;width:44px;font-size:1rem;font-weight:800}
+@media(max-width:520px){.top{flex-wrap:wrap}.top .btn{padding:0 10px}.top #btnGuide{padding:0}.actions{margin-left:auto}}
+body.tour-on{overflow:hidden}
+.tour-backdrop{position:fixed;inset:0;z-index:40;background:rgba(3,10,15,.68);animation:tour-fade .2s ease-out both}
+/* raise the stacking container (header or bottom bar) above the backdrop, and make the lifted area inert */
+.tour-lift{z-index:41!important}
+.tour-lift,.tour-lift *,.tour-highlight-active,.tour-highlight-active *{pointer-events:none}
+/* spotlight ring on the target */
+.tour-highlight-active{position:relative;z-index:41;border-radius:12px;scroll-margin-top:96px;box-shadow:0 0 0 3px var(--bar-hl-a),0 0 0 8px rgba(246,190,74,.32);animation:tour-pulse 1.8s ease-in-out infinite}
+/* directional arrow: a child of the target, anchored by CSS to the side named in its class */
+.tour-arrow{position:absolute;left:50%;width:30px;height:30px;margin-left:-15px;z-index:3;color:var(--bar-hl-a);pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.tour-arrow-svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.tour-arrow-up{top:calc(100% + 10px);animation:tour-bob-up .9s ease-in-out infinite}
+.tour-arrow-down{bottom:calc(100% + 10px);animation:tour-bob-down .9s ease-in-out infinite}
+.tour-arrow-down .tour-arrow-svg{transform:rotate(180deg)}
+.tour-arrow-left{left:calc(100% + 10px);top:50%;margin:-15px 0 0;animation:tour-bob-left .9s ease-in-out infinite}
+.tour-arrow-left .tour-arrow-svg{transform:rotate(-90deg)}
+.tour-arrow-right{left:auto;right:calc(100% + 10px);top:50%;margin:-15px 0 0;animation:tour-bob-right .9s ease-in-out infinite}
+.tour-arrow-right .tour-arrow-svg{transform:rotate(90deg)}
+/* step card: bottom sheet on phones, centred panel on larger screens */
+.tour-card{position:fixed;z-index:45;left:12px;right:12px;bottom:calc(106px + env(safe-area-inset-bottom));max-width:420px;max-height:calc(100vh - 150px);margin:0 auto;overflow:auto;padding:var(--s3);background:var(--card);color:var(--ink);border:1px solid var(--line);border-top:4px solid var(--bar-hl-b);border-radius:var(--r);box-shadow:0 18px 48px rgba(0,0,0,.42);animation:tour-rise .22s ease-out both}
+.tour-meta{display:flex;justify-content:space-between;align-items:center;gap:var(--s2)}
+.tour-step{font-size:.75rem;font-weight:700;color:var(--acc)}
+.tour-skip{min-width:44px;min-height:44px;padding:0 6px;border:0;background:none;color:var(--mute);font:inherit;font-size:.82rem;font-weight:650;text-decoration:underline;cursor:pointer}
+.tour-title{margin:0 0 6px;font-size:1.05rem;letter-spacing:-.01em}
+.tour-body{margin:0 0 var(--s2);font-size:.9rem;line-height:1.55}
+.tour-dots{display:flex;gap:6px;margin:0 0 var(--s2)}
+.tour-dot{width:8px;height:8px;border-radius:99px;background:var(--line);transition:width .2s,background .2s}
+.tour-dot.is-done{background:var(--bar-b)}
+.tour-dot.is-on{width:22px;background:linear-gradient(90deg,var(--bar-a),var(--bar-b))}
+.tour-actions{display:flex;justify-content:flex-end;gap:var(--s2)}
+.tour-actions .btn[hidden]{display:none}
+@media(min-width:720px){.tour-card{left:calc(50% - 210px);right:auto;width:420px;margin:0}}
+@keyframes tour-fade{from{opacity:0}to{opacity:1}}
+@keyframes tour-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes tour-pulse{0%,100%{box-shadow:0 0 0 3px var(--bar-hl-a),0 0 0 8px rgba(246,190,74,.32)}50%{box-shadow:0 0 0 3px var(--bar-hl-a),0 0 0 13px rgba(246,190,74,.1)}}
+@keyframes tour-bob-up{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes tour-bob-down{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
+@keyframes tour-bob-left{0%,100%{transform:translateX(0)}50%{transform:translateX(-7px)}}
+@keyframes tour-bob-right{0%,100%{transform:translateX(0)}50%{transform:translateX(7px)}}
+@media(prefers-reduced-motion:reduce){.tour-backdrop,.tour-card,.tour-highlight-active,.tour-arrow{animation:none!important}}
+@media print{.tour-backdrop,.tour-card{display:none!important}}
+.tour-back,.tour-next{min-width:88px}

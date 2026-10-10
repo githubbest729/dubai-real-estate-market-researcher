@@ -5,6 +5,7 @@ import {SNAP,TIERS,communityData,communityDetail,hasData,absentFromTable,dataKey
 import {vbars,hbars} from './js/charts.js';
 import {sendQuery} from './js/api.js';
 import {createVoice,voiceSupported} from './js/voice.js';
+import {startTour,tourDone} from './js/tour.js';
 import {exportPdf,shareReport,download} from './js/export.js';
 
 // The Gumloop webhook URL is a server-side secret (GUMLOOP_WEBHOOK_URL). The browser only talks to this same-origin proxy.
@@ -131,8 +132,11 @@ function setupVoice(){
  if(!v){mic.disabled=true;mic.title='Not supported in this browser';return}
  mic.onclick=()=>{v.toggle();audit.log('voice_toggled',{})}}
 
+function launchTour(){if(!$('#consent').hidden)return;startTour({onEnd:r=>audit.log('tour_'+r,{}).then(renderAudit)})}
+
 function setupActions(){
  $('#send').onclick=submit;$('#snapBtn').onclick=requestSnapshot;
+ $('#btnGuide').onclick=launchTour;
  $('#btnPdf').onclick=()=>{audit.log('export_pdf',{});exportPdf()};
  $('#btnShare').onclick=async()=>{const r=await shareReport('Dubai Market Desk report',state.lastReport);audit.log('share_report',{result:r});toast(r==='copied'?'Report copied':r==='shared'?'Shared':'Share cancelled')};
  $('#saveNotes').onclick=async()=>{state.notes=sanitize($('#notes').value,2000);await secureSet('notes',state.notes);audit.log('notes_saved',{chars:state.notes.length});toast('Notes saved')};
@@ -140,7 +144,7 @@ function setupActions(){
  $('#auditCsv').onclick=()=>download('audit-log.csv',audit.toCSV(),'text/csv');
  $('#exportData').onclick=()=>{audit.log('data_export',{});download('my-data.json',JSON.stringify({prefs:state.prefs,history:state.history,notes:state.notes,audit:JSON.parse(audit.toJSON())},null,2),'application/json')};
  $('#wipe').onclick=async()=>{if(!confirm('Erase all saved preferences, history, notes and the audit log from this device?'))return;await wipeAll();toast('All local data erased');setTimeout(()=>location.reload(),800)};
- $('#consentOk').onclick=async()=>{state.consent=true;await secureSet('consent',{at:Date.now()});$('#consent').hidden=true;await audit.log('consent_granted',{});renderCompliance();renderAudit()};
+ $('#consentOk').onclick=async()=>{state.consent=true;await secureSet('consent',{at:Date.now()});$('#consent').hidden=true;await audit.log('consent_granted',{});renderCompliance();renderAudit();if(!tourDone())setTimeout(launchTour,400)};
  const net=()=>{const o=navigator.onLine;$('#net').textContent=o?'Online':'Offline';$('#net').className='pill '+(o?'ok':'bad')};addEventListener('online',net);addEventListener('offline',net);net();
  addEventListener('resize',()=>['#cPsf','#cCount','#cValue','#cRent','#cBeds'].forEach(i=>$(i)._redraw?.()));
  matchMedia('(prefers-color-scheme:dark)').onchange=()=>renderDashboard()}
@@ -152,5 +156,5 @@ async function init(){
  state.notes=await secureGet('notes','');$('#notes').value=state.notes;
  state.consent=!!await secureGet('consent');$('#consent').hidden=state.consent;
  applyTheme();renderPrefs();renderAgents();setupNav();setupVoice();setupActions();renderResults();renderDashboard();
- await audit.log('session_start',{});await renderCompliance();await renderAudit()}
+ await audit.log('session_start',{});await renderCompliance();await renderAudit();if(state.consent&&!tourDone())setTimeout(launchTour,700)}
 init();
