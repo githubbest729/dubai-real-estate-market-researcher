@@ -124,3 +124,52 @@ canvas{display:block;width:100%;height:auto;touch-action:pan-y;cursor:pointer}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 @media print{.tabs,.top .actions,.prefs,#tab-ask .card,.toast,.top::after{display:none!important}.tab{display:block!important}body{background:#fff;color:#000}.card,.kpi{box-shadow:none;break-inside:avoid}}
+
+/* ---- Chart hover tooltips (CSS-only positioning; classes assigned in js/charts.js) ---- */
+.chart{position:relative}
+.tip-grid{position:absolute;display:grid;margin:0;padding:0;--pb:48px;--pt:30px}
+.tip-grid.v{top:0;bottom:0;left:44px;right:10px}
+.tip-grid.h{top:6px;left:0;right:0;grid-auto-rows:34px}
+.tip-grid.cols-1{grid-template-columns:minmax(0,1fr)}
+.tip-grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tip-grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.tip-grid.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.tip-grid.cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.tip-grid.cols-6{grid-template-columns:repeat(6,minmax(0,1fr))}
+.tip-grid.cols-7{grid-template-columns:repeat(7,minmax(0,1fr))}
+.tip-grid.cols-8{grid-template-columns:repeat(8,minmax(0,1fr))}
+.tip-hit{position:relative;display:block;min-width:0;margin:0;padding:0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.tip-hit:focus-visible{outline:2px solid var(--bar-hl-a);outline-offset:-2px;border-radius:6px}
+.tip{position:absolute;z-index:12;width:max-content;max-width:min(236px,72vw);padding:9px 11px;border-radius:9px;background:var(--ink);color:var(--bg);box-shadow:0 8px 24px rgba(0,0,0,.28);font-size:.76rem;line-height:1.4;text-align:left;pointer-events:none;opacity:0;visibility:hidden;transform:translate(var(--tx,0),5px);transition:opacity .14s,transform .14s,visibility .14s}
+.tip-hit:hover .tip,.tip-hit:focus-visible .tip{opacity:1;visibility:visible;transform:translate(var(--tx,0),0)}
+.tip-t{display:block;font-size:.78rem;font-weight:700}
+.tip-v{display:block;margin:1px 0 3px;font-size:1rem;font-weight:750;letter-spacing:-.01em;color:var(--bar-hl-a)}
+.tip-n{display:block;font-weight:400;opacity:.85}
+/* vertical bars: tooltip sits above the bar top (level 0-20 = bar height in 5% steps) */
+.tip-grid.v .tip{--tx:-50%;left:50%;bottom:calc(var(--pb) + (100% - var(--pb) - var(--pt)) * var(--lv,0) / 20 + 26px)}
+.tip-grid.v .tip-hit.edge-l .tip{--tx:0;left:0}
+.tip-grid.v .tip-hit.edge-r .tip{--tx:0;left:auto;right:0}
+.tip-grid.v .tip-hit:hover{background:linear-gradient(180deg,transparent,rgba(127,127,127,.08))}
+/* horizontal bars: tooltip above the hovered row, right-aligned */
+.tip-grid.h .tip{right:4px;bottom:calc(100% - 2px)}
+.tip-hit.lv-0{--lv:0}
+.tip-hit.lv-1{--lv:1}
+.tip-hit.lv-2{--lv:2}
+.tip-hit.lv-3{--lv:3}
+.tip-hit.lv-4{--lv:4}
+.tip-hit.lv-5{--lv:5}
+.tip-hit.lv-6{--lv:6}
+.tip-hit.lv-7{--lv:7}
+.tip-hit.lv-8{--lv:8}
+.tip-hit.lv-9{--lv:9}
+.tip-hit.lv-10{--lv:10}
+.tip-hit.lv-11{--lv:11}
+.tip-hit.lv-12{--lv:12}
+.tip-hit.lv-13{--lv:13}
+.tip-hit.lv-14{--lv:14}
+.tip-hit.lv-15{--lv:15}
+.tip-hit.lv-16{--lv:16}
+.tip-hit.lv-17{--lv:17}
+.tip-hit.lv-18{--lv:18}
+.tip-hit.lv-19{--lv:19}
+.tip-hit.lv-20{--lv:20}
