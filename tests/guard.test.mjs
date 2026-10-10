@@ -1,0 +1,13 @@
+import {createRequire} from 'node:module';import assert from 'node:assert';
+const {check,clean}=createRequire(import.meta.url)('../server/guard.js');
+const ok={method:'POST',ip:'1.1.1.1',headers:{'content-type':'application/json',host:'app.test',origin:'https://app.test'},bodyText:JSON.stringify({query:'hi a@b.com',agents:['Market Analyst','Evil'],extra:'x'})};
+let r=check(ok);assert.ok(r.payload&&!r.payload.query.includes('a@b.com')&&r.payload.agents.length===1&&!('extra' in r.payload));
+assert.equal(check({...ok,method:'GET'}).status,405);
+assert.equal(check({...ok,headers:{...ok.headers,'content-type':'text/plain'}}).status,415);
+assert.equal(check({...ok,headers:{...ok.headers,origin:'https://evil.test'}}).status,403);
+assert.equal(check({...ok,headers:{...ok.headers,'sec-fetch-site':'cross-site'}}).status,403);
+assert.equal(check({...ok,bodyText:'x'.repeat(20000)}).status,413);
+assert.equal(check({...ok,bodyText:'{}'}).status,400);
+let last;for(let i=0;i<8;i++)last=check({...ok,ip:'9.9.9.9'});assert.equal(last.status,429);
+assert.equal(clean('784-1990-1234567-1',50),'[REDACTED_EMIRATES_ID]');
+console.log('guard tests passed');

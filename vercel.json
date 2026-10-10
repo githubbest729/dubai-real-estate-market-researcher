@@ -1,2 +1,0 @@
-{"rewrites":[{"source":"/api/gumloop","destination":"https://api.gumloop.com/trigger_incoming_webhook/DUDswynapjkVUwbVHzY8BR/wXH7zl-JYywwBTkx68pS8S9Qj8r7CtpUywpuRuBh4uU"}],
- "headers":[{"source":"/(.*)","headers":[{"key":"X-Content-Type-Options","value":"nosniff"},{"key":"X-Frame-Options","value":"DENY"},{"key":"Referrer-Policy","value":"no-referrer"},{"key":"Content-Security-Policy","value":"frame-ancestors 'none'"}]}]}
